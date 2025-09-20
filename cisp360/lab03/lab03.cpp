@@ -2,7 +2,6 @@
 using namespace std;
 
 int main() {
-    // Loop from 1 to 30 using a for loop
     for (int i = 1; i <= 30; i++) {
         if (i % 3 == 0 && i % 5 == 0) {
             cout << "FizzBuzz" << endl;
