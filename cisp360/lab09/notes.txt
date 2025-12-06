@@ -1,0 +1,4 @@
+Line 1: Hello from Lab09!
+Line 2: We are practicing file I/O.
+Line 3: Counting lines is useful.
+Line 4: Reading them back with getline().
