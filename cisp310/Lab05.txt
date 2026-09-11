@@ -1,0 +1,35 @@
+; Name: Andrew Le 
+
+section .bss
+  bite    resb 1       ; reserve 1 byte for the input digit
+  result  resb 1       ; reserve 1 byte for the computation result
+
+section .text
+  global _start
+
+_start:
+  ; read input
+  mov eax, 3           ; sys_read
+  mov ebx, 0           ; stdin
+  mov ecx, bite        ; input bite
+  mov edx, 1           ; bite length
+  int 0x80             ; call the kernel
+
+  ; Convert ASCII digit to raw numeric value
+  mov eax, [bite]      ; transfer value in bite to a register
+  sub eax, '0'         ; Convert single digit number to ASCII
+
+  xor eax, 15          ; XOR with 15
+  add eax, '0'         ; Convert single digit number to ASCII
+  mov [result], eax    ; transfer destination character to result for displaying
+
+  ; stdout result 
+  mov eax,4            ; The system call for write (sys_write)
+	mov ebx,1            ; File descriptor 1 - standard output
+	mov ecx,result       ; Put the offset of result in ecx
+	mov edx,1            ; Lengh of the result
+  int 0x80             ; System call
+
+  mov eax, 1           ; sys_exit code
+  mov ebx, 0           ; exit is normal
+  int 0x80             ; System call

@@ -1,0 +1,92 @@
+; Andrew Le
+
+section .data
+    helloMsg db 'Hello '                    ; first part of greeting
+    helloLen equ $ - helloMsg               ; length of first part of greeting
+
+    endHello db '! How are you?', 0xA       ; ending of greeting with newline
+    endHelloLen equ $ - endHello            ; length of ending of greeting
+
+    countMsg db 'Your name has '            ; first part of count line
+    countMsgLen equ $ - countMsg            ; length of first part of count line
+
+    countEnd db ' characters in it.', 0xA   ; ending of count line with newline
+    countEndLen equ $ - countEnd            ; length of ending of count line
+
+section .bss
+    nameBuf resb 25                         ; reserve 25 bytes for name input
+    charCount resd 1                        ; reserve a double word for character count
+    countAscii resb 2                       ; reserve 2 bytes for ASCII digits
+
+section .text
+  global _start
+
+_start:
+    call read_name                          ; call subroutine to read name
+    call make_count_ascii                   ; call subroutine to convert count to ASCII
+    call print_greeting                     ; call subroutine to print greeting line
+    call print_count_line                   ; call subroutine to print count line
+    call exit_program                       ; call subroutine to exit program
+
+read_name:                                  ; subroutine to read name from keyboard input
+    mov eax, 3                              ; system call number for read
+    mov ebx, 0                              ; file descriptor for stdin
+    mov ecx, nameBuf                        ; memory address of input buffer
+    mov edx, 25                             ; maximum bytes to read
+    int 0x80                                ; call kernel
+
+    mov [charCount], eax                    ; store number of bytes read
+    ret                                     ; return to caller
+
+make_count_ascii:                           ; subroutine to convert the character count into ASCII digits
+    mov eax, [charCount]                    ; move character count into eax
+    mov edx, 0                              ; clear edx before division
+    mov ebx, 10                             ; move divisor into ebx
+    div ebx                                 ; divide eax by ebx
+
+    add eax, '0'                            ; convert quotient digit to ASCII
+    mov [countAscii], al                    ; store tens digit
+
+    add edx, '0'                            ; convert remainder digit to ASCII
+    mov [countAscii+1], dl                  ; store ones digit
+    ret                                     ; return to caller
+
+print_greeting:                             ; subroutine to print the greeting message with name
+    mov ecx, helloMsg                       ; message to write
+    mov edx, helloLen                       ; message length
+    call print_text                         ; print first part of greeting
+
+    mov ecx, nameBuf                        ; message to write
+    mov edx, [charCount]                    ; number of bytes to write
+    call print_text                         ; print the name
+
+    mov ecx, endHello                       ; message to write
+    mov edx, endHelloLen                    ; message length
+    call print_text                         ; print ending of greeting
+    ret                                     ; return to caller
+
+print_count_line:                           ; subroutine to print the line showing how many characters are in the input name
+    mov ecx, countMsg                       ; message to write
+    mov edx, countMsgLen                    ; message length
+    call print_text                         ; print first part of count line
+
+    mov ecx, countAscii                     ; message to write
+    mov edx, 2                              ; length is 2 bytes
+    call print_text                         ; print both ASCII digits
+
+    mov ecx, countEnd                       ; message to write
+    mov edx, countEndLen                    ; message length
+    call print_text                         ; print ending of count line
+    ret                                     ; return to caller
+
+print_text:                                 ; helper subroutine to write text to stdout
+    mov eax, 4                              ; system call number for write
+    mov ebx, 1                              ; file descriptor for stdout
+    int 0x80                                ; call kernel
+    ret                                     ; return to caller
+
+exit_program:                               ; subroutine to exit program
+    mov eax, 1                              ; system call number for exit
+    mov ebx, 0                              ; normal exit
+    int 0x80                                ; call kernel
+    ret                                     ; return to caller

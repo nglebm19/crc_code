@@ -1,0 +1,122 @@
+; Name: Andrew Le
+section .data
+  name db 'Andrew Le', 0xA  ; TODO: Add your name inside the single quotes
+  len equ $ - name          ; (don't delete)
+
+section .bss
+  x resw 1          ; Used for atoi (don't delete)
+  temp resb 1       ; used for atoi (don't delete)
+  s3 resb 3         ; used for itoa (don't delete)
+  ; TODO: Add uninitialized data as needed
+  inp_buf: resb 16  ; our input buffer
+  inp_len equ $-inp_buf ; max 16 bytes
+  t1 resw 1         ; this can hold the returned value from atoi_3
+  t2 resb 3         ; this can hold the returned value from itoa_3
+  
+section .text
+  global _start
+
+_start:
+  ; TODO: Call print_name
+  call print_name       ; call the subroutine
+
+
+  ; TODO: Get input buffer from keyboard (100-994); Call input
+  mov ecx, inp_buf      ; Our input buffer
+  mov edx, inp_len      ; Max length
+  call input            ; call the subroutine
+
+  ; TODO: Convert input buffer into integer value; Call atoi_3
+  mov eax, [inp_buf]    ; place the initial ASCII representation of a 3-digit number into eax
+  call atoi_3           ; this is the subroutine call
+  mov [t1], eax         ; capture the return value in eax and place it in t1
+  
+  ; TODO: Add 5 to the value in integer value; Call add_5
+  mov eax, [t1]         ; place starting integer value here before call
+  call add_5            ; call the subroutine
+  mov [t1], eax         ; capture the return value in eax and place it in t1
+  
+  ; TODO: Convert value into ASCII string for printing; Call itoa_3
+  mov eax, [t1]         ; place the value returned from add_5 into eax as an argument
+  call itoa_3           ; call the subroutine
+  mov [t2], eax         ; capture the return value in eax and place it into t2 for later printing...
+  
+  ; TODO: print the buffer...; Call print
+  mov ecx, t2           ; t2 is output buffer for print
+  mov edx, 3            ; write 3 bytes
+  call print            ; call the subroutine
+  
+  ; TODO: Exit program; Call exit
+  call exit             ; call the subroutine
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; DON'T CHANGE ANYTHING BELOW THIS LINE! ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+add_5:
+  add eax, 5          ; Add 5 to the value
+  ret                 ; return to caller
+
+print_name:
+  mov ecx, name       ; set output buffer
+  mov edx, len        ; set length
+  call print          ; call subroutine
+  ret                 ; return to caller
+  
+print:
+  mov eax, 4          ; sys_write
+  mov ebx, 1          ; stdout
+  int 0x80            ; system call
+  ret                 ; return to caller
+  
+input:
+  mov eax, 3          ; sys_read
+  mov ebx, 0          ; stdin
+  int 0x80            ; system call
+  ret                 ; return to caller
+	
+atoi_3:
+  mov ecx, eax        ; transfer contents into a register we aren't otherwise using (ecx)
+  xor eax, eax        ; clear out previous bits
+  mov al, cl          ; move 1st byte of input to al register
+  sub al, '0'         ; convert ASCII to integer digit
+  mov bx, 100         ; We are going to multiply by 100
+  mul bx              ; ax = ax(al) * bx
+  mov [x], ax         ; Store first part of integer into memory
+  xor eax, eax        ; clear out previous bits
+  mov al, ch          ; move 2nd byte of input to al register
+  sub al, '0'         ; convert ASCII to integer digit
+  mov bx, 10          ; Multiply by 10 for 10's column
+  mul bx              ; ax = ax(al) * bx 
+  mov [temp], al      ; Place al into temporary storage...
+  xor eax, eax        ; clear out previous bits
+  mov eax, [x]        ; Place old value into eax to build on...
+  add eax, [temp]     ; Add temporary value to this...
+  mov [x], eax        ; Place back into "x"
+  xor eax, eax        ; clear out previous bits
+  shr ecx, 16         ; shift 2-bytes to the right to reveal last two-bytes of register...
+  mov al, cl          ; move 3rd byte of input to al register
+  sub al, '0'         ; convert ASCII to integer digit
+  add eax, [x]        ; add x to this value...
+  ret                 ; return to caller
+  
+itoa_3:
+  xor dx, dx          ; Clear dx register prior to div operation (always!)
+  mov bx, 100         ; move divisor into bx for divisor
+  div bx              ; ax = ax / bx
+  add ax, '0'         ; convert digit to ASCII
+  mov [s3], byte ax   ; move byte to memory
+  mov ax, dx          ; add remainder to ax...
+  xor dx, dx          ; make sure to clear out the modulo register prior to repeat use of div!
+  mov bx, 10          ; set divisor as 10 now...
+  div bx              ; ax = ax / bx
+  add ax, '0'         ; convert to ASCII
+  mov [s3+1], byte ax ; move byte to memory
+  add dx, '0'         ; convert to ASCII
+  mov [s3+2], byte dx ; move byte to memory
+  xor eax, eax        ; clear out the reg.
+  mov eax, [s3]       ; transfer for return value...
+  ret                 ; return to caller
+  
+exit:
+  mov eax,1           ; sys_exit
+  mov ebx,0           ; exit is normal
+  int 0x80            ; system call
+  

@@ -1,0 +1,55 @@
+; Name: Andrew Le
+section .bss
+  inp_buf resb 2      ; Reserve 2 bytes to hold our keyboard input
+  res     resb 1      ; Reserve 1 byte to hold our integer representation of input
+  out_buf resb 2      ; Reserve 2 bytes to hold the output string of incremented input
+  temp:   resb 1      ; Used as a temporary "variable"
+
+section .text
+  global _start
+
+_start:
+  ; Read 2-digit number from stdin into inp_buf
+  mov eax, 3          ; sys_read
+  mov ebx, 0          ; stdin
+  mov ecx, inp_buf    ; destination buffer
+  mov edx, 2          ; read 2 bytes
+  int 0x80            ; system call
+
+  ; Convert 2-character ASCII string to integer
+  mov al, byte [inp_buf]   ; place 1st character into 8-bit register
+  sub al, '0'              ; remove ASCII offset to reveal integer digit
+  mov bx, 10               ; place 10 into bx for future multiplication
+  mul bx                   ; ax = ax * bx (recall that al is lowest 8-bits of ax so they hold the same value)
+  mov [res], ax            ; store total (so far) into res
+
+  mov al, byte [inp_buf+1] ; place 2nd character into 8-bit register
+  sub al, '0'              ; remove ASCII offset again...
+  mov [temp], al           ; store value in temporary memory, for now...
+  mov eax, [res]           ; transfer stored value to eax
+  add eax, [temp]          ; add the temp. value
+  mov [res], eax           ; transfer unified total to res
+
+  ; Increment the integer value by 1
+  mov al, [res]       ; load integer value from res
+  inc al              ; increment by 1
+  mov [res], al       ; store incremented value back into res
+
+  ; Convert integer back to 2-character ASCII string
+  mov ax, [res]              ; ax = res
+  mov bx, 10                 ; divide by 10 for tens column value
+  div bx                     ; ax = ax / bx
+  add ax, '0'                ; convert digit to ASCII
+  mov [out_buf], byte ax     ; move quotient into place
+  add dx, '0'                ; convert digit to ASCII
+  mov [out_buf+1], byte dx   ; move remainder into place
+
+  mov eax, 4          ; sys_write
+  mov ebx, 1          ; stdout
+  mov ecx, out_buf    ; output buffer
+  mov edx, 2          ; write 2 bytes
+  int 0x80            ; system call
+
+  mov eax, 1          ; sys_exit
+  mov ebx, 0          ; exit is normal
+  int 0x80            ; system call

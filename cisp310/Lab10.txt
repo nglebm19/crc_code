@@ -1,0 +1,97 @@
+; Name: Andrew Le
+
+section .data
+    prompt      db "String has ", 0        ; output prefix
+    suffix      db " vowels", 10, 0        ; output suffix with newline
+
+section .bss
+    buffer      resb 50                    ; input buffer (allow up to 50 chars)
+    count       resb 1                     ; store vowel count (1 digit)
+    out_char    resb 1                     ; store ASCII digit
+
+section .text
+    global _start
+
+_start:
+    ; read input from stdin
+    mov eax, 3              ; syscall: sys_read
+    mov ebx, 0              ; file descriptor: stdin
+    mov ecx, buffer         ; buffer to store input
+    mov edx, 50             ; max number of bytes
+    int 0x80                ; call kernel
+
+    ; initialize variables
+    mov esi, buffer         ; esi points to start of string
+    mov byte [count], 0     ; initialize vowel count = 0
+
+loop_start:
+    mov al, [esi]           ; load current character
+
+    cmp al, 0               ; check for null terminator
+    je loop_end             ; if end, stop loop
+
+    cmp al, 10              ; check for newline
+    je loop_end             ; stop if newline
+
+    ; check vowels (lowercase)
+    cmp al, 'a'        ; compare current character with 'a'
+    je is_vowel        ; if equal, jump to is_vowel
+    cmp al, 'e'        ; compare current character with 'e'
+    je is_vowel        ; if equal, jump to is_vowel
+    cmp al, 'i'        ; compare current character with 'i'
+    je is_vowel        ; if equal, jump to is_vowel
+    cmp al, 'o'        ; compare current character with 'o'
+    je is_vowel        ; if equal, jump to is_vowel
+    cmp al, 'u'        ; compare current character with 'u'
+    je is_vowel        ; if equal, jump to is_vowel
+
+    ; check vowels (uppercase)
+    cmp al, 'A'        ; compare current character with 'A'
+    je is_vowel        ; if equal, jump to is_vowel
+    cmp al, 'E'        ; compare current character with 'E'
+    je is_vowel        ; if equal, jump to is_vowel
+    cmp al, 'I'        ; compare current character with 'I'
+    je is_vowel        ; if equal, jump to is_vowel
+    cmp al, 'O'        ; compare current character with 'O'
+    je is_vowel        ; if equal, jump to is_vowel
+    cmp al, 'U'        ; compare current character with 'U'
+    je is_vowel        ; if equal, jump to is_vowel
+
+    jmp next_char           ; not vowel → skip
+
+is_vowel:
+    inc byte [count]        ; increase vowel count
+
+next_char:
+    inc esi                 ; move to next character
+    jmp loop_start          ; repeat loop
+
+loop_end:
+    ; convert count to ascii
+    mov al, [count]         ; load count
+    add al, '0'             ; convert to ASCII
+    mov [out_char], al      ; store ASCII digit
+
+    ; print text
+    mov eax, 4              ; syscall: sys_write
+    mov ebx, 1              ; stdout
+    mov ecx, prompt         ; message
+    mov edx, 11             ; length of "String has "
+    int 0x80                ; call kernel to exit
+
+    mov eax, 4              ; syscall: sys_write
+    mov ebx, 1              ; stdout
+    mov ecx, out_char       ; ASCII number
+    mov edx, 1              ; length = 1
+    int 0x80                ; call kernel to exit
+
+    mov eax, 4              ; syscall: sys_write
+    mov ebx, 1              ; stdout
+    mov ecx, suffix         ; suffix message
+    mov edx, 8              ; length of " vowels\n"
+    int 0x80                ; call kernel to exit
+
+    ; exit program
+    mov eax, 1              ; syscall: sys_exit
+    mov ebx, 0              ; exit status
+    int 0x80                ; call kernel to exit

@@ -1,0 +1,92 @@
+; Student's name here: Andrew Le
+
+section .data
+  bad db 'Invalid input (non-numeric or no input)', 0xA
+  l1 equ $ - bad
+  
+  good db 'Valid number!', 0xA
+  l2 equ $ - good
+
+section .bss
+  inp_buf resb 3          ; 3 bytes numeric input max
+  count resb 1            ; will hold # of bytes read
+
+section .text
+  global _start
+_start:
+  mov ecx, inp_buf
+  mov edx, 3
+  call input
+  mov [count], eax        ; save # of bytes read into count
+  
+  ; TODO: Determine if any of the digits are NOT numbers...
+  xor eax, eax            ; clear eax
+  mov al, [count]         ; move count into al
+  cmp al, 1               ; compare count to 1
+  jl print_bad            ; if count < 1 (no input), jump to bad
+  
+  xor eax, eax            ; clear eax
+  mov al, [inp_buf]       ; load first character into al
+  cmp al, '0'             ; compare character to '0'
+  jl print_bad            ; if character < '0', jump to bad
+  cmp al, '9'             ; compare character to '9'
+  jg print_bad            ; if character > '9', jump to bad
+  
+  xor eax, eax            ; clear eax
+  mov al, [count]         ; move count into al
+  cmp al, 1               ; compare count to 1
+  je print_good           ; if count = 1, all done, jump to good
+  
+  xor eax, eax            ; clear eax
+  mov al, [inp_buf + 1]   ; load second character into al
+  cmp al, '0'             ; compare character to '0'
+  jl print_bad            ; if character < '0', jump to bad
+  cmp al, '9'             ; compare character to '9'
+  jg print_bad            ; if character > '9', jump to bad
+  
+  xor eax, eax            ; clear eax
+  mov al, [count]         ; move count into al
+  cmp al, 2               ; compare count to 2
+  je print_good           ; if count = 2, all done, jump to good
+  
+  xor eax, eax            ; clear eax
+  mov al, [inp_buf + 2]   ; load third character into al
+  cmp al, '0'             ; compare character to '0'
+  jl print_bad            ; if character < '0', jump to bad
+  cmp al, '9'             ; compare character to '9'
+  jg print_bad            ; if character > '9', jump to bad
+  
+  jmp print_good          ; all characters valid, jump to good
+  
+  call exit
+  
+; Used to print the message for "bad" input (invalid)
+print_bad:
+  mov ecx, bad
+  mov edx, l1
+  call print
+  call exit
+  
+; Used to print the message for "good" input (valid numeric 1, 2, or 3 digit string)
+print_good:
+  mov ecx, good
+  mov edx, l2
+  call print
+  call exit
+  
+input:
+  mov eax, 3
+  mov ebx, 0
+  int 0x80
+  ret
+  
+print:
+  mov eax, 4
+  mov ebx, 1
+  int 0x80
+  ret
+  
+exit:
+  mov eax,1
+  mov ebx, 0
+  int 0x80

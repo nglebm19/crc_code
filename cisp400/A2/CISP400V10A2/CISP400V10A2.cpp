@@ -1,3 +1,5 @@
+// Name: Andrew Le
+// Assignment Number: A2
 // CISP400V10A2.cpp
 // Test program for class Encrypt.
 #include "Encrypt.h" // include definition of class Encrypt

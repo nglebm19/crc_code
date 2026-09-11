@@ -1,0 +1,59 @@
+; Name: Andrew Le
+
+section .bss
+  count: resd 1                             ; hold number of bytes read
+  inp_buf: resb 4                           ; input buffer
+  inp_len equ $-inp_buf                     ; max 4 bytes
+  
+  con: resb 16                              ; destination buffer
+  cursor: resd 1                            ; holds the eventual length of the above buffer
+
+section .data
+  course: db 'CISP'                         ;'CISP' string 
+  courseLen: equ $-course                   ; Length of the course string
+
+	hello:     db 'My favorite class is ',    ; 'My favorite class is' string 
+	helloLen:  equ $-hello                    ; Length of the hello string
+
+section .text
+	global _start
+
+_start:
+  ; stdout hello
+	mov eax, 4                                 ; The system call for write (sys_write)
+	mov ebx, 1                                 ; File descriptor 1 - standard output
+	mov ecx, hello                             ; Put the offset of hello in ecx
+	mov edx, helloLen                          ; Length of the hello string
+  int 0x80                                  ; System call
+
+  ; Concatenate course and inp_buf string
+  ; copy constant string to buffer
+  mov eax, [course]                         ; copy the first 4 bytes from constant string to eax
+  mov [con], eax                            ; copy 4 bytes from eax to concatenation buffer
+  mov dword [cursor], 4                     ; set the current size of the cursor (con length)
+  
+  ; stdin input from keyboard to inp_buf
+  mov eax, 3                                ; sys_read
+  mov ebx, 0                                ; stdin
+  mov ecx, inp_buf                          ; input buffer
+  mov edx, inp_len                          ; input length
+  int 0x80                                  ; System call
+  mov [count], eax
+  
+  ; Append inp_buf to end of con buffer
+  mov eax, [inp_buf]                        ; copy the first 4 bytes from constant string to eax
+  mov [con+4], eax                          ; copy 4 bytes from eax to concatenation buffer
+  
+  mov eax, [cursor]                         ; move previous value of cursor to eax
+  add eax, [count]                          ; add the number of bytes read into input buffer to eax
+  mov [cursor], eax                         ; place updated value in cursor
+
+  mov eax,4                                 ; The system call for write (sys_write)
+	mov ebx,1                                 ; File descriptor 1 - standard output
+	mov ecx,con                               ; Put the offset of hello in ecx
+	mov edx,[cursor]                          ; Lengh of the con
+  int 0x80                                  ; System call
+
+  mov eax, 1                                ; sys_exit code
+  mov ebx, 0                                ; exit is normal
+  int 0x80                                  ; System call
